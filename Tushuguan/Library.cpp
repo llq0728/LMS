@@ -1,40 +1,65 @@
-/*
- * 图书馆类 —— 与Book类形成组合关系
- *
- * 组合关系体现：
- * - Library 包含 Book 对象数组（has a 关系）
- * - Library 整体，Book 部分
- * - Library 负责管理所有Book对象的生命周期
- * - Book对象不能脱离Library独立存在（逻辑上）
- */
+#include "Library.h"
+#include <iostream>
 
-#ifndef LIBRARY_H
-#define LIBRARY_H
+Library::Library(string name) : libraryName(name), bookCount(0) {}
 
-#include "Book.h"
-#include <string>
-using namespace std;
+Library::~Library() {}
 
-const int MAX_BOOKS = 100; // 最大图书种类数
+bool Library::addBook(const Book& book) {
+    if (bookCount >= MAX_BOOKS) {
+        cout << "图书馆已满，无法添加新图书！" << endl;
+        return false;
+    }
 
-class Library {
-private:
-    string libraryName;
-    Book books[MAX_BOOKS];  // 组合关系：对象数组
-    int bookCount;          // 当前图书种类数
+    // 检查是否已存在
+    for (int i = 0; i < bookCount; i++) {
+        if (books[i].getBookId() == book.getBookId()) {
+            cout << "图书编号已存在！" << endl;
+            return false;
+        }
+    }
 
-public:
-    Library(string name = "图书馆");
-    ~Library();
+    books[bookCount] = book; // 赋值操作
+    bookCount++;
+    cout << "成功添加图书：" << book.getBookName() << endl;
+    return true;
+}
 
-    // ===== 组合关系：图书馆管理图书 =====
-    bool addBook(const Book& book);   // 添加图书
-    bool removeBook(string bookId);   // 删除图书
-    Book* findBook(string bookId);    // 查找图书
-    void displayAllBooks() const;     // 显示所有图书
+bool Library::removeBook(string bookId) {
+    for (int i = 0; i < bookCount; i++) {
+        if (books[i].getBookId() == bookId) {
+            cout << "删除图书：" << books[i].getBookName() << endl;
+            // 后面的往前移
+            for (int j = i; j < bookCount - 1; j++) {
+                books[j] = books[j + 1];
+            }
+            bookCount--;
+            return true;
+        }
+    }
+    cout << "未找到编号为 " << bookId << " 的图书！" << endl;
+    return false;
+}
 
-    string getLibraryName() const;
-    int getBookCount() const;
-};
+Book* Library::findBook(string bookId) {
+    for (int i = 0; i < bookCount; i++) {
+        if (books[i].getBookId() == bookId) {
+            return &books[i]; // 返回指针
+        }
+    }
+    return nullptr;
+}
 
-#endif
+void Library::displayAllBooks() const {
+    cout << "\n===== " << libraryName << " 图书目录（共"
+        << bookCount << "种）=====" << endl;
+    for (int i = 0; i < bookCount; i++) {
+        cout << "[" << i + 1 << "] ";
+        books[i].display();
+        cout << endl;
+    }
+    cout << "==========================================" << endl;
+}
+
+string Library::getLibraryName() const { return libraryName; }
+int Library::getBookCount() const { return bookCount; }

@@ -1,13 +1,3 @@
-/*
- * 图书馆类 —— 与Book类形成组合关系
- *
- * 组合关系体现：
- * - Library 包含 Book 对象数组（has a 关系）
- * - Library 整体，Book 部分
- * - Library 负责管理所有Book对象的生命周期
- * - Book对象不能脱离Library独立存在（逻辑上）
- */
-
 #ifndef LIBRARY_H
 #define LIBRARY_H
 

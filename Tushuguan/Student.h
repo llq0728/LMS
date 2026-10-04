@@ -1,13 +1,3 @@
-/*
- * 学生类 —— 与Book类形成依赖关系
- *
- * 依赖关系体现：
- * - Student的borrowBook函数参数是 Book*（指针传递）
- * - 学生借书时，会修改Book对象的状态（借出数量+1）
- * - 同时修改Student自身的状态（已借数量+1）
- * - 这是典型的 use a 关系
- */
-
 #ifndef STUDENT_H
 #define STUDENT_H
 

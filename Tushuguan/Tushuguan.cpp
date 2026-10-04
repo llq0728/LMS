@@ -1,75 +1,79 @@
-﻿/*
- * ==============================================
- *     实验一：类与对象 —— 主程序
- * ==============================================
- *
- * 演示内容：
- * 1. 使用默认构造函数创建对象
- * 2. 使用重载构造函数创建对象
- * 3. 使用拷贝构造函数创建对象
- * 4. 调用成员函数操作对象
- * 5. ISBN合法性验证
- * 6. 借书/还书操作
- */
-
-#include <iostream>
+﻿#include <iostream>
 #include "Book.h"
+#include "Student.h"
+#include "Library.h"
 using namespace std;
 
 int main() {
-    cout << "===== 实验一：类与对象 演示 =====" << endl << endl;
+    cout << "===== 实验二：组合关系与依赖关系 演示 =====" << endl << endl;
 
-    // ===== 1. 默认构造函数 =====
-    cout << "【1】使用默认构造函数创建图书：" << endl;
-    Book book1;
-    book1.display();
+    // ===== 1. 组合关系演示 =====
+    cout << "【组合关系演示】Library 组合 Book" << endl;
+    Library lib("西南科技大学图书馆");
+
+    // 添加图书（组合关系：图书馆包含图书）
+    lib.addBook(Book("B001", "9787302298229", "C++程序设计",
+        "谭浩强", "清华大学出版社", 5));
+    lib.addBook(Book("B002", "9787302147510", "数据结构",
+        "严蔚敏", "清华大学出版社", 3));
+    lib.addBook(Book("B003", "9787111407010", "算法导论",
+        "Thomas H.Cormen", "机械工业出版社", 2));
+
+    lib.displayAllBooks();
     cout << endl;
 
-    // ===== 2. 重载构造函数 =====
-    cout << "【2】使用重载构造函数创建图书：" << endl;
-    Book book2("B002", "9787302147510", "数据结构",
-        "严蔚敏", "清华大学出版社", 39.0, 380);
-    book2.display();
-    cout << endl;
+    // ===== 2. 依赖关系演示 =====
+    cout << "【依赖关系演示】Student 依赖 Book（传指针）" << endl;
+    Student stu1("2024001", "张三", "计算机学院", 5);
+    Student stu2("2024002", "李四", "计算机学院", 5);
 
-    // ===== 3. 拷贝构造函数 =====
-    cout << "【3】使用拷贝构造函数创建图书副本：" << endl;
-    Book book3 = book2; // 调用拷贝构造
-    book3.setBookId("B003"); // 修改副本编号
-    book3.display();
-    cout << endl;
+    cout << "\n--- 学生信息 ---" << endl;
+    stu1.display(); cout << endl;
+    stu2.display(); cout << endl;
 
-    // ===== 4. 修改数据成员 =====
-    cout << "【4】修改图书信息：" << endl;
-    book1.setBookName("C++程序设计（第五版）");
-    book1.setPrice(59.9);
-    book1.setPages(520);
-    cout << "修改后：" << book1.getBookName()
-        << "，价格：¥" << book1.getPrice()
-        << "，页数：" << book1.getPages() << "页" << endl;
-    cout << endl;
+    // 通过图书馆找到图书（组合 + 依赖的联动）
+    cout << "\n--- 借书操作 ---" << endl;
+    Book* book1 = lib.findBook("B001");
+    Book* book2 = lib.findBook("B002");
+    Book* book3 = lib.findBook("B003");
 
-    // ===== 5. ISBN 验证 =====
-    cout << "【5】ISBN 合法性验证：" << endl;
-    Book bookBad("B999", "12345", "测试书", "作者", "出版社", 10, 100);
-    cout << "book2 ISBN(" << book2.getIsbn() << ")："
-        << (book2.validateISBN() ? "合法" : "不合法") << endl;
-    cout << "bookBad ISBN(" << bookBad.getIsbn() << ")："
-        << (bookBad.validateISBN() ? "合法" : "不合法") << endl;
-    cout << endl;
+    // 张三借书（依赖关系：Student.use(Book)）
+    stu1.borrowBook(book1);  // 传指针 —— 地址传递
+    stu1.borrowBook(book2);
+    stu1.borrowBook(book3);
 
-    // ===== 6. 借书/还书操作 =====
-    cout << "【6】借阅操作演示：" << endl;
-    cout << "第一次借阅：" << endl;
-    book1.borrowBook();
-    cout << "第二次借阅：" << endl;
-    book1.borrowBook(); // 应该失败
-    cout << "归还图书：" << endl;
-    book1.returnBook();
-    cout << "再次借阅：" << endl;
-    book1.borrowBook(); // 应该成功
-    cout << endl;
+    // 李四借书
+    stu2.borrowBook(book1);
+    stu2.borrowBook(book1);
+    stu2.borrowBook(book3);  // 算法导论只有2本，应该被借完了
 
-    cout << "===== 演示结束 =====" << endl;
+    cout << "\n--- 借阅后的图书状态 ---" << endl;
+    lib.displayAllBooks();
+
+    cout << "\n--- 借阅后的学生状态 ---" << endl;
+    stu1.display(); cout << endl;
+    stu2.display(); cout << endl;
+
+    // 还书操作
+    cout << "\n--- 还书操作 ---" << endl;
+    stu1.returnBook(book2);
+    stu2.borrowBook(book2);  // 李四现在能借到了
+
+    cout << "\n--- 最终状态 ---" << endl;
+    lib.displayAllBooks();
+    stu1.display(); cout << endl;
+    stu2.display(); cout << endl;
+
+    // ===== 3. 删除图书演示 =====
+    cout << "\n【删除图书演示】" << endl;
+    lib.removeBook("B002");
+    lib.displayAllBooks();
+
+    cout << "\n===== 演示结束 =====" << endl;
+    cout << "\n实验思考：" << endl;
+    cout << "1. 组合关系中，整体类(Library)的构造函数调用顺序是什么？" << endl;
+    cout << "2. 为什么借书函数要用指针/引用传递，而不是值传递？" << endl;
+    cout << "3. 值传递和地址传递的区别和适用场景？" << endl;
+
     return 0;
 }
