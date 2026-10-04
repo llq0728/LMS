@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Tushuguan/Tushuguan.vcxproj" />
+  <Project Path="Tushuguan/Tushuguan.vcxproj" Id="3b8a76fc-dd06-4e44-9f61-eb8e91ca97d9" />
 </Solution>

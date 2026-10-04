@@ -5,7 +5,7 @@
 using namespace std;
 
 int main() {
-    cout << "===== 实验二：组合关系与依赖关系 演示 =====" << endl << endl;
+    cout << "实验二：组合关系与依赖关系 演示" << endl << endl;
 
     // ===== 1. 组合关系演示 =====
     cout << "【组合关系演示】Library 组合 Book" << endl;
@@ -69,11 +69,7 @@ int main() {
     lib.removeBook("B002");
     lib.displayAllBooks();
 
-    cout << "\n===== 演示结束 =====" << endl;
-    cout << "\n实验思考：" << endl;
-    cout << "1. 组合关系中，整体类(Library)的构造函数调用顺序是什么？" << endl;
-    cout << "2. 为什么借书函数要用指针/引用传递，而不是值传递？" << endl;
-    cout << "3. 值传递和地址传递的区别和适用场景？" << endl;
+    cout << "\n演示结束" << endl;
 
     return 0;
 }
