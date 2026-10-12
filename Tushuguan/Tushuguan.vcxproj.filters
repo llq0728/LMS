@@ -18,24 +18,18 @@
     <ClCompile Include="Tushuguan.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Book.cpp">
+    <ClCompile Include="Resource.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Student.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="Library.cpp">
+    <ClCompile Include="Reader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Book.h">
+    <ClInclude Include="Resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Student.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Library.h">
+    <ClInclude Include="Reader.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

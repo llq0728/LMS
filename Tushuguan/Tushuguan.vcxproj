@@ -139,15 +139,13 @@
     </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Book.cpp" />
-    <ClCompile Include="Library.cpp" />
-    <ClCompile Include="Student.cpp" />
+    <ClCompile Include="Reader.cpp" />
+    <ClCompile Include="Resource.cpp" />
     <ClCompile Include="Tushuguan.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Book.h" />
-    <ClInclude Include="Library.h" />
-    <ClInclude Include="Student.h" />
+    <ClInclude Include="Reader.h" />
+    <ClInclude Include="Resource.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
