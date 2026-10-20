@@ -1,30 +1,51 @@
 ﻿#include "Resource.h"
 #include <cctype>
+#include <iostream>
+using namespace std;
+
+// ==================== Resource 顶层基类（所有资源通用，移除馆藏相关） ====================
 Resource::Resource()
-    : resId(""), title(""), author(""), publisher(""),
-    totalCount(0), availableCount(0), borrowPeriod(30) {
+    : resId(""), title(""), author(""), publisher(""), borrowPeriod(30) {
 }
 
-Resource::Resource(string id, string title, string author, string publisher,
-    int totalCount, int borrowPeriod)
-    : resId(id), title(title), author(author), publisher(publisher),
-    totalCount(totalCount), borrowPeriod(borrowPeriod) {
-    availableCount = totalCount;
+Resource::Resource(string id, string title, string author, string publisher, int borrowPeriod)
+    : resId(id), title(title), author(author), publisher(publisher), borrowPeriod(borrowPeriod) {
 }
 
 Resource::~Resource() {}
 
+// 基类公共信息输出（displayBase：只输出全部资源都有的基础信息）
 void Resource::displayBase() const {
     cout << "编号:" << resId
         << " | 标题:" << title
         << " | 作者:" << author
         << " | 出版社:" << publisher
-        << " | 馆藏:" << totalCount << "本"
-        << " | 可借:" << availableCount << "本"
-        << " | 借阅期:" << borrowPeriod << "天";
+        << " | 借阅期限:" << borrowPeriod << "天";
 }
 
-bool Resource::borrowOne() {
+// 纯虚函数，子类重写display实现多态
+void Resource::display() const {
+    displayBase();
+}
+
+string Resource::getResId() const { return resId; }
+string Resource::getTitle() const { return title; }
+int Resource::getBorrowPeriod() const { return borrowPeriod; }
+void Resource::setTitle(string title) { this->title = title; }
+
+// ==================== PaperResource 中间纸质资源类【新增！】====================
+// 继承Resource，专门管理馆藏、借阅归还（只有图书、杂志继承它）
+PaperResource::PaperResource()
+    : Resource(), totalCount(0), availableCount(0) {
+}
+
+PaperResource::PaperResource(string id, string title, string author, string publisher, int borrowPeriod, int totalCount)
+    : Resource(id, title, author, publisher, borrowPeriod), totalCount(totalCount)
+{
+    availableCount = totalCount;
+}
+
+bool PaperResource::borrowOne() {
     if (availableCount > 0) {
         availableCount--;
         return true;
@@ -32,7 +53,7 @@ bool Resource::borrowOne() {
     return false;
 }
 
-bool Resource::returnOne() {
+bool PaperResource::returnOne() {
     if (availableCount < totalCount) {
         availableCount++;
         return true;
@@ -40,40 +61,37 @@ bool Resource::returnOne() {
     return false;
 }
 
-bool Resource::isAvailable() const {
+bool PaperResource::isAvailable() const {
     return availableCount > 0;
 }
 
-string Resource::getResId() const { return resId; }
-string Resource::getTitle() const { return title; }
-int Resource::getAvailableCount() const { return availableCount; }
-int Resource::getBorrowPeriod() const { return borrowPeriod; }
+int PaperResource::getAvailableCount() const { return availableCount; }
+int PaperResource::getTotalCount() const { return totalCount; }
 
-void Resource::setTitle(string title) { this->title = title; }
-void Resource::addCount(int num) {
-    totalCount += num;
-    availableCount += num;
+void PaperResource::display() const {
+    Resource::displayBase();
+    cout << " | 馆藏:" << totalCount << "本"
+        << " | 可借:" << availableCount << "本";
 }
 
-// ==================== Book 子类 ====================
-
-Book::Book() : Resource(), isbn(""), pages(0) {
-    borrowPeriod = 30; // 图书借阅30天
-}
+// ==================== Book 子类：继承 PaperResource（不再直接继承Resource） ====================
+Book::Book() : PaperResource(), isbn(""), pages(0) {}
 
 Book::Book(string id, string title, string author, string publisher,
-    string isbn, int pages, int totalCount)
-    : Resource(id, title, author, publisher, totalCount, 30),
+    string isbn, int pages, int totalCount, int borrowPeriod)
+    : PaperResource(id, title, author, publisher, borrowPeriod, totalCount),
     isbn(isbn), pages(pages) {
 }
 
 Book::~Book() {}
 
+string Book::getTypeName() const {
+    return "普通图书";
+}
+
 void Book::display() const {
-    cout << "[普通图书] ";
-    displayBase(); // 调用基类方法
-    cout << " | ISBN:" << isbn
-        << " | 页数:" << pages << "页";
+    PaperResource::display();
+    cout << " | ISBN:" << isbn << " | 页数:" << pages << "页";
 }
 
 bool Book::validateISBN() const {
@@ -84,55 +102,43 @@ bool Book::validateISBN() const {
     return true;
 }
 
-string Book::getIsbn() const { return isbn; }
-int Book::getPages() const { return pages; }
-
-// ==================== Magazine 子类 ====================
-
-Magazine::Magazine() : Resource(), issn(""), issueNumber(0), publishYear(0) {
-    borrowPeriod = 14; // 杂志借阅14天
-}
+// ==================== Magazine 子类：继承 PaperResource ====================
+Magazine::Magazine() : PaperResource(), issn(""), issueNumber(0), publishYear(0) {}
 
 Magazine::Magazine(string id, string title, string author, string publisher,
-    string issn, int issue, int year, int totalCount)
-    : Resource(id, title, author, publisher, totalCount, 14),
+    string issn, int issue, int year, int totalCount, int borrowPeriod)
+    : PaperResource(id, title, author, publisher, borrowPeriod, totalCount),
     issn(issn), issueNumber(issue), publishYear(year) {
 }
 
 Magazine::~Magazine() {}
 
+string Magazine::getTypeName() const {
+    return "杂志期刊";
+}
+
 void Magazine::display() const {
-    cout << "[杂志期刊] ";
-    displayBase();
-    cout << " | ISSN:" << issn
-        << " | 第" << issueNumber << "期"
+    PaperResource::display();
+    cout << " | ISSN:" << issn << " | 第" << issueNumber << "期"
         << " | " << publishYear << "年";
 }
 
-string Magazine::getIssn() const { return issn; }
-int Magazine::getIssueNumber() const { return issueNumber; }
-int Magazine::getPublishYear() const { return publishYear; }
-
-// ==================== EResource 子类 ====================
-
-EResource::EResource() : Resource(), format(""), fileSize(0) {
-    borrowPeriod = 7; // 电子资源借阅7天
-}
+// ==================== EResource 子类：直接继承Resource，**无馆藏** ====================
+EResource::EResource() : Resource(), format(""), fileSize(0) {}
 
 EResource::EResource(string id, string title, string author, string publisher,
-    string format, double fileSize, int totalCount)
-    : Resource(id, title, author, publisher, totalCount, 7),
+    string format, double fileSize, int borrowPeriod)
+    : Resource(id, title, author, publisher, borrowPeriod),
     format(format), fileSize(fileSize) {
 }
 
 EResource::~EResource() {}
 
-void EResource::display() const {
-    cout << "[电子资源] ";
-    displayBase();
-    cout << " | 格式:" << format
-        << " | 大小:" << fileSize << "MB";
+string EResource::getTypeName() const {
+    return "电子资源";
 }
 
-string EResource::getFormat() const { return format; }
-double EResource::getFileSize() const { return fileSize; }
+void EResource::display() const {
+    Resource::displayBase();
+    cout << " | 格式:" << format << " | 大小:" << fileSize << "MB";
+}

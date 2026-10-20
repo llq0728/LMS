@@ -1,30 +1,42 @@
 ﻿#ifndef LIBRARY_H
 #define LIBRARY_H
-
-#include "Book.h"
+#include "Resource.h"
+#include "Reader.h"
 #include <string>
 using namespace std;
 
-const int MAX_BOOKS = 100; // 最大图书种类数
+const int MAX_RESOURCES = 100;
+const int MAX_READERS = 100;
 
 class Library {
 private:
     string libraryName;
-    Book books[MAX_BOOKS];  // 组合关系：对象数组
-    int bookCount;          // 当前图书种类数
 
+    // 多态！基类指针数组管理所有类型资源
+    Resource* resources[MAX_RESOURCES];
+    int resourceCount;
+
+    // 多态！基类指针数组管理所有类型读者
+    Reader* readers[MAX_READERS];
+    int readerCount;
 public:
     Library(string name = "图书馆");
-    ~Library();
+    ~Library(); // 虚析构函数配合，正确释放所有派生类对象
 
-    // ===== 组合关系：图书馆管理图书 =====
-    bool addBook(const Book& book);   // 添加图书
-    bool removeBook(string bookId);   // 删除图书
-    Book* findBook(string bookId);    // 查找图书
-    void displayAllBooks() const;     // 显示所有图书
+    // ========== 资源管理 ==========
+    void addResource(Resource* res);   // 添加资源（多态参数）
+    void displayAllResources() const;  // 多态显示
+    Resource* findResource(string id);
+
+    // ========== 读者管理 ==========
+    void addReader(Reader* reader);    // 添加读者（多态参数）
+    void displayAllReaders() const;    // 多态显示
+    Reader* findReader(string id);
+
+    // ========== 借阅功能 ==========
+    bool borrowBook(string readerId, string resourceId);
+    bool returnBook(string readerId, string resourceId);
 
     string getLibraryName() const;
-    int getBookCount() const;
 };
-
 #endif
