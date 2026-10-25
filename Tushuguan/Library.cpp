@@ -1,125 +1,286 @@
 ﻿#include "Library.h"
 #include <iostream>
+#include <algorithm>
+#include <fstream>
 
 Library::Library(string name)
-    : libraryName(name), resourceCount(0), readerCount(0) {
+    : libraryName(name), resourceCount(0), readerCount(0)
+{
+    // 初始化为空指针
     for (int i = 0; i < MAX_RESOURCES; i++)
         resources[i] = nullptr;
     for (int i = 0; i < MAX_READERS; i++)
         readers[i] = nullptr;
 }
 
-Library::~Library() {
-    for (int i = 0; i < resourceCount; i++) {
+Library::~Library()
+{
+    // 释放所有资源对象
+    for (int i = 0; i < resourceCount; i++)
+    {
         delete resources[i];
     }
-    for (int i = 0; i < readerCount; i++) {
+    // 释放所有读者对象
+    for (int i = 0; i < readerCount; i++)
+    {
         delete readers[i];
     }
+    // records是BorrowRecord对象，vector自动销毁，不需要手动delete
 }
 
-void Library::addResource(Resource* res) {
-    if (resourceCount < MAX_RESOURCES) {
-        resources[resourceCount++] = res;
-        cout << "添加" << res->getTypeName() << "：" << res->getTitle() << endl;
+void Library::addResource(Resource* r)
+{
+    if (resourceCount < MAX_RESOURCES)
+    {
+        resources[resourceCount++] = r;
     }
 }
 
-void Library::displayAllResources() const {
-    cout << "\n===== " << libraryName << " 资源目录（共"
-        << resourceCount << "种）=====" << endl;
-    for (int i = 0; i < resourceCount; i++) {
-        cout << "[" << i + 1 << "] [" << resources[i]->getTypeName() << "] ";
+bool Library::removeResource(string id)
+{
+    for (int i = 0; i < resourceCount; i++)
+    {
+        if (resources[i]->getResId() == id)
+        {
+            delete resources[i];
+            // 后面元素往前移动覆盖
+            for (int j = i; j < resourceCount - 1; j++)
+            {
+                resources[j] = resources[j + 1];
+            }
+            resources[resourceCount - 1] = nullptr;
+            resourceCount--;
+            return true;
+        }
+    }
+    return false;
+}
+
+Resource* Library::findResource(string id)
+{
+    for (int i = 0; i < resourceCount; i++)
+    {
+        if (resources[i]->getResId() == id)
+            return resources[i];
+    }
+    return nullptr;
+}
+
+void Library::displayAllResources()
+{
+    cout << "\n全部资源列表：" << endl;
+    for (int i = 0; i < resourceCount; i++)
+    {
         resources[i]->display();
         cout << endl;
     }
-    cout << "==========================================" << endl;
 }
 
-Resource* Library::findResource(string id) {
-    for (int i = 0; i < resourceCount; i++) {
-        if (resources[i]->getResId() == id) {
-            return resources[i];
+vector<Resource*> Library::searchResources(string keyword)
+{
+    vector<Resource*> res;
+    for (int i = 0; i < resourceCount; i++)
+    {
+        // 标题包含关键字就匹配
+        if (resources[i]->getTitle().find(keyword) != string::npos)
+        {
+            res.push_back(resources[i]);
         }
+    }
+    return res;
+}
+
+void Library::addReader(Reader* r)
+{
+    if (readerCount < MAX_READERS)
+    {
+        readers[readerCount++] = r;
+    }
+}
+
+bool Library::removeReader(string id)
+{
+    for (int i = 0; i < readerCount; i++)
+    {
+        if (readers[i]->getReaderId() == id)
+        {
+            delete readers[i];
+            for (int j = i; j < readerCount - 1; j++)
+            {
+                readers[j] = readers[j + 1];
+            }
+            readers[readerCount - 1] = nullptr;
+            readerCount--;
+            return true;
+        }
+    }
+    return false;
+}
+
+Reader* Library::findReader(string id)
+{
+    for (int i = 0; i < readerCount; i++)
+    {
+        if (readers[i]->getReaderId() == id)
+            return readers[i];
     }
     return nullptr;
 }
 
-void Library::addReader(Reader* reader) {
-    if (readerCount < MAX_READERS) {
-        readers[readerCount++] = reader;
-        cout << "添加" << reader->getReaderType() << "：" << reader->getName() << endl;
-    }
-}
-
-void Library::displayAllReaders() const {
-    cout << "\n===== 读者列表（共" << readerCount << "人）=====" << endl;
-    for (int i = 0; i < readerCount; i++) {
-        cout << "[" << i + 1 << "] [" << readers[i]->getReaderType() << "] ";
+void Library::displayAllReaders()
+{
+    cout << "\n全部读者列表：" << endl;
+    for (int i = 0; i < readerCount; i++)
+    {
         readers[i]->display();
         cout << endl;
     }
-    cout << "========================================" << endl;
 }
 
-Reader* Library::findReader(string id) {
-    for (int i = 0; i < readerCount; i++) {
-        if (readers[i]->getReaderId() == id) {
-            return readers[i];
-        }
-    }
-    return nullptr;
-}
+bool Library::borrowBook(string readerId, string resId, string today)
+{
+    Reader* rd = findReader(readerId);
+    Resource* rs = findResource(resId);
+    if (!rd || !rs)
+        return false;
 
-bool Library::borrowBook(string readerId, string resourceId) {
-    Reader* reader = findReader(readerId);
-    Resource* resource = findResource(resourceId);
-    if (!reader || !resource) {
-        cout << "错误：读者或资源不存在！" << endl;
+    // 判断是不是纸质资源，电子资源不能借
+    PaperResource* pr = dynamic_cast<PaperResource*>(rs);
+    if (!pr)
         return false;
-    }
-    PaperResource* paperRes = dynamic_cast<PaperResource*>(resource);
-    if (paperRes == nullptr) {
-        cout << "错误：电子资源不可外借！" << endl;
+
+    // 判断读者还能不能借、书还有库存
+    if (!rd->canBorrowMore() || !pr->borrowOne())
         return false;
-    }
-    if (!reader->canBorrowMore()) {
-        cout << "错误：" << reader->getName() << " 已达借阅上限！" << endl;
-        return false;
-    }
-    if (!paperRes->isAvailable()) {
-        cout << "错误：《" << resource->getTitle() << "》已全部借出！" << endl;
-        return false;
-    }
-    paperRes->borrowOne();
-    reader->borrowBook();
-    cout << reader->getName() << " 成功借阅《" << resource->getTitle() << "》"
-        << "（" << resource->getTypeName() << "）" << endl;
+
+    // 添加一条借阅记录，到期日期这里简化写
+    BorrowRecord newRec(readerId, resId, today, "到期简化");
+    records.push_back(newRec);
+    rd->borrowBook();
     return true;
 }
 
-bool Library::returnBook(string readerId, string resourceId) {
-    Reader* reader = findReader(readerId);
-    Resource* resource = findResource(resourceId);
-    if (!reader || !resource) {
-        cout << "错误：读者或资源不存在！" << endl;
+bool Library::returnBook(string readerId, string resId, string today)
+{
+    Reader* rd = findReader(readerId);
+    Resource* rs = findResource(resId);
+    if (!rd || !rs)
         return false;
-    }
-    PaperResource* paperRes = dynamic_cast<PaperResource*>(resource);
-    if (paperRes == nullptr) {
-        cout << "错误：电子资源不需要归还！" << endl;
+
+    PaperResource* pr = dynamic_cast<PaperResource*>(rs);
+    if (!pr)
         return false;
+
+    // 找到这条没归还的记录
+    for (auto& rec : records)
+    {
+        if (rec.getReaderId() == readerId && rec.getResourceId() == resId && !rec.getIsReturned())
+        {
+            rec.doReturn(today, 0);
+            pr->returnOne();
+            rd->returnBook();
+            return true;
+        }
     }
-    if (paperRes->returnOne() && reader->returnBook()) {
-        cout << reader->getName() << " 归还《" << resource->getTitle() << "》" << endl;
-        return true;
-    }
-    else {
-        cout << "错误：还书失败！" << endl;
-        return false;
-    }
+    return false;
 }
 
-string Library::getLibraryName() const {
+vector<BorrowRecord> Library::getReaderBorrows(string rid)
+{
+    vector<BorrowRecord> ret;
+    for (auto& r : records)
+    {
+        if (r.getReaderId() == rid)
+            ret.push_back(r);
+    }
+    return ret;
+}
+
+vector<BorrowRecord> Library::getBorrowRecords()
+{
+    return records;
+}
+
+void Library::showStatistics()
+{
+    cout << "\n====图书馆统计信息====" << endl;
+    cout << "资源总数：" << resourceCount << endl;
+    cout << "读者总数：" << readerCount << endl;
+    cout << "借阅记录总数：" << records.size() << endl;
+}
+
+vector<pair<string, int>> Library::getTopBooks(int n)
+{
+    vector<pair<string, int>> tmp;
+    return tmp;
+}
+
+bool Library::verifyAdmin(string pwd) const
+{
+    return pwd == "admin123";
+}
+
+int Library::getResourceCount() const
+{
+    return resourceCount;
+}
+
+int Library::getReaderCount() const
+{
+    return readerCount;
+}
+
+string Library::getLibraryName() const
+{
     return libraryName;
+}
+
+// 把所有资源放到vector，给FileManager调用
+vector<Resource*> Library::getAllResourceList()
+{
+    vector<Resource*> list;
+    for (int i = 0; i < resourceCount; i++)
+    {
+        list.push_back(resources[i]);
+    }
+    return list;
+}
+
+// 把所有读者放到vector，给FileManager调用
+vector<Reader*> Library::getAllReaderList()
+{
+    vector<Reader*> list;
+    for (int i = 0; i < readerCount; i++)
+    {
+        list.push_back(readers[i]);
+    }
+    return list;
+}
+
+// 一次性保存三类数据到txt文件
+bool Library::saveAllData()
+{
+    bool s1 = FileManager::saveResources(getAllResourceList(), "resources.txt");
+    bool s2 = FileManager::saveReaders(getAllReaderList(), "readers.txt");
+    bool s3 = FileManager::saveRecords(records, "records.txt");
+    return s1 && s2 && s3;
+}
+
+// 从txt加载数据
+bool Library::loadAllData()
+{
+    vector<Resource*> resList = FileManager::loadResources("resources.txt");
+    for (auto r : resList)
+    {
+        addResource(r);
+    }
+
+    vector<Reader*> rdList = FileManager::loadReaders("readers.txt");
+    for (auto r : rdList)
+    {
+        addReader(r);
+    }
+
+    records = FileManager::loadRecords("records.txt");
+    return true;
 }
