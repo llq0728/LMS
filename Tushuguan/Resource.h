@@ -16,31 +16,24 @@ public:
     Resource();
     Resource(string id, string title, string author, string publisher,
         int borrowPeriod);
-
     // 虚析构函数！重要！
-    // 用基类指针删除派生类对象时，确保派生类析构函数被调用
     virtual ~Resource();
 
     // ===== 纯虚函数 =====
-    // 使Resource成为抽象类，不能实例化
-    // 子类必须实现，统一接口
     virtual string getTypeName() const = 0;
+    virtual void display() const = 0;
 
     // ===== 虚函数 =====
-    virtual void displayBase() const; // 新增：输出所有资源公共基础信息，代码复用
-    virtual void display() const;
+    virtual void displayBase() const;
 
     // Getter
     string getResId() const;
     string getTitle() const;
     int getBorrowPeriod() const;
-
     void setTitle(string title);
 };
 
 // =====【新增中间纸质资源类 PaperResource】=====
-// 继承Resource，存放馆藏、借阅相关属性与方法
-// Book、Magazine继承这个类；EResource直接继承Resource，不带馆藏
 class PaperResource : public Resource {
 protected:
     int totalCount;
@@ -49,16 +42,12 @@ public:
     PaperResource();
     PaperResource(string id, string title, string author, string publisher,
         int borrowPeriod, int totalCount);
-
     virtual ~PaperResource() {}
-
     bool borrowOne();
     bool returnOne();
     bool isAvailable() const;
-
     int getAvailableCount() const;
     int getTotalCount() const;
-
     void display() const override;
 };
 
@@ -71,11 +60,9 @@ public:
     Book();
     Book(string id, string title, string author, string publisher,
         string isbn, int pages, int totalCount, int borrowPeriod);
-    ~Book();
-    // override 显式标记重写（C++11）
+    ~Book() override;
     string getTypeName() const override;
     void display() const override;
-
     bool validateISBN() const;
 };
 
@@ -89,7 +76,7 @@ public:
     Magazine();
     Magazine(string id, string title, string author, string publisher,
         string issn, int issue, int year, int totalCount, int borrowPeriod);
-    ~Magazine();
+    ~Magazine() override;
     string getTypeName() const override;
     void display() const override;
 };
@@ -103,7 +90,7 @@ public:
     EResource();
     EResource(string id, string title, string author, string publisher,
         string format, double fileSize, int borrowPeriod);
-    ~EResource();
+    ~EResource() override;
     string getTypeName() const override;
     void display() const override;
 };
