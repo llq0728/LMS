@@ -18,8 +18,10 @@ private:
     static void adminMenu();
     static void adminAddResource();
     static void adminDelResource();
+    static void adminEditResource();   // 修改资源（改标题）
     static void adminAddReader();
     static void adminDelReader();
+    static void adminEditReader();     // 修改读者（改姓名/密码）
     static void adminShowAllRecords();
 };
 #endif

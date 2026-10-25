@@ -9,21 +9,16 @@
 #include <utility>
 using namespace std;
 
-const int MAX_RESOURCES = 100;
-const int MAX_READERS = 100;
-
 class Library {
 private:
     string libraryName;
-    // 资源数组，存放不同子类的资源指针（多态）
-    Resource* resources[MAX_RESOURCES];
-    int resourceCount;
+    // 资源 vector，存放不同子类的资源指针（多态）
+    vector<Resource*> resources;
 
-    // 读者数组，存放不同子类的读者指针（多态）
-    Reader* readers[MAX_READERS];
-    int readerCount;
+    // 读者 vector，存放不同子类的读者指针（多态）
+    vector<Reader*> readers;
 
-    // 借阅记录，vector动态管理，不再用指针
+    // 借阅记录，vector动态管理
     vector<BorrowRecord> records;
 
 public:

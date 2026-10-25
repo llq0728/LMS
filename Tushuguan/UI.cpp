@@ -140,6 +140,8 @@ void UI::adminMenu()
         cout << "7. 查看所有借阅记录" << endl;
         cout << "8. 保存数据" << endl;
         cout << "9. 加载数据" << endl;
+        cout << "10. 修改资源" << endl;
+        cout << "11. 修改读者" << endl;
         cout << "0. 退出登录" << endl;
         string op = input("请输入选项：");
         if (op == "1")
@@ -172,6 +174,10 @@ void UI::adminMenu()
                 cout << "加载失败！" << endl;
             pause();
         }
+        else if (op == "10")
+            adminEditResource();
+        else if (op == "11")
+            adminEditReader();
         else if (op == "0")
         {
             break;
@@ -317,6 +323,44 @@ void UI::adminShowAllRecords()
             << "  归还日期：" << r.getReturnDate()
             << "  状态：" << status << endl;
     }
+    pause();
+}
+
+// 修改资源：按编号找到后改标题
+void UI::adminEditResource()
+{
+    string id = input("输入要修改的资源编号：");
+    Resource* res = lib->findResource(id);
+    if (!res)
+    {
+        cout << "未找到该资源！";
+        pause();
+        return;
+    }
+    cout << "当前标题：" << res->getTitle() << endl;
+    string newTitle = input("输入新标题：");
+    res->setTitle(newTitle);   // 复用 Resource 已有的 setTitle
+    cout << "修改成功！";
+    pause();
+}
+
+// 修改读者：按编号找到后改姓名和密码
+void UI::adminEditReader()
+{
+    string id = input("输入要修改的读者编号：");
+    Reader* rd = lib->findReader(id);
+    if (!rd)
+    {
+        cout << "未找到该读者！";
+        pause();
+        return;
+    }
+    cout << "当前姓名：" << rd->getName() << endl;
+    string newName = input("输入新姓名：");
+    string newPwd = input("输入新密码：");
+    rd->setName(newName);       // Reader 已有 setName
+    rd->setPassword(newPwd);    // Reader 已有 setPassword
+    cout << "修改成功！";
     pause();
 }
 

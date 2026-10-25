@@ -2,54 +2,85 @@
 #include <iostream>
 #include <algorithm>
 #include <fstream>
+#include <sstream>
+#include <cstdlib>
+
+// ========== 日期工具：把 "YYYY-MM-DD" 拆成 年/月/日 ==========
+static void splitDate(const string& s, int& y, int& m, int& d) {
+    y = atoi(s.substr(0, 4).c_str());
+    m = atoi(s.substr(5, 2).c_str());
+    d = atoi(s.substr(8, 2).c_str());
+}
+
+// 平年每月天数
+static int monthDays(int y, int m) {
+    int days[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+    // 闰年二月 29 天
+    if ((y%4==0 && y%100!=0) || y%400==0) days[1] = 29;
+    return days[m-1];
+}
+
+// 今天 today 加 n 天，返回新的 "YYYY-MM-DD"
+static string addDays(const string& today, int n) {
+    int y, m, d;
+    splitDate(today, y, m, d);
+    d += n;
+    // 天数超出当月就滚到下个月
+    while (d > monthDays(y, m)) {
+        d -= monthDays(y, m);
+        m++;
+        if (m > 12) { m = 1; y++; }
+    }
+    // 用 stringstream 拼成 "YYYY-MM-DD"
+    stringstream ss;
+    ss << y << "-" << (m < 10 ? "0" : "") << m << "-" << (d < 10 ? "0" : "") << d;
+    return ss.str();
+}
+
+// 算 d2 - d1 相差几天（d2 晚于 d1 时为正）
+static int daysBetween(const string& d1, const string& d2) {
+    int y1,m1,dd1, y2,m2,dd2;
+    splitDate(d1, y1, m1, dd1);
+    splitDate(d2, y2, m2, dd2);
+    // 先按整年数粗算
+    int diff = (y2 - y1) * 365;
+    for (int y = y1; y < y2; y++)
+        if ((y%4==0 && y%100!=0) || y%400==0) diff++; // 闰年补一天
+    // 再算年内天数差
+    for (int m = 1; m < m1; m++) diff -= monthDays(y1, m);
+    diff -= dd1;
+    for (int m = 1; m < m2; m++) diff += monthDays(y2, m);
+    diff += dd2;
+    return diff;
+}
 
 Library::Library(string name)
-    : libraryName(name), resourceCount(0), readerCount(0)
+    : libraryName(name)
 {
-    // 初始化为空指针
-    for (int i = 0; i < MAX_RESOURCES; i++)
-        resources[i] = nullptr;
-    for (int i = 0; i < MAX_READERS; i++)
-        readers[i] = nullptr;
 }
 
 Library::~Library()
 {
     // 释放所有资源对象
-    for (int i = 0; i < resourceCount; i++)
-    {
-        delete resources[i];
-    }
+    for (auto r : resources) delete r;
     // 释放所有读者对象
-    for (int i = 0; i < readerCount; i++)
-    {
-        delete readers[i];
-    }
-    // records是BorrowRecord对象，vector自动销毁，不需要手动delete
+    for (auto r : readers) delete r;
+    // records是BorrowRecord对象，vector自动销毁
 }
 
 void Library::addResource(Resource* r)
 {
-    if (resourceCount < MAX_RESOURCES)
-    {
-        resources[resourceCount++] = r;
-    }
+    resources.push_back(r);
 }
 
 bool Library::removeResource(string id)
 {
-    for (int i = 0; i < resourceCount; i++)
+    for (auto it = resources.begin(); it != resources.end(); ++it)
     {
-        if (resources[i]->getResId() == id)
+        if ((*it)->getResId() == id)
         {
-            delete resources[i];
-            // 后面元素往前移动覆盖
-            for (int j = i; j < resourceCount - 1; j++)
-            {
-                resources[j] = resources[j + 1];
-            }
-            resources[resourceCount - 1] = nullptr;
-            resourceCount--;
+            delete *it;
+            resources.erase(it);
             return true;
         }
     }
@@ -58,10 +89,9 @@ bool Library::removeResource(string id)
 
 Resource* Library::findResource(string id)
 {
-    for (int i = 0; i < resourceCount; i++)
+    for (auto r : resources)
     {
-        if (resources[i]->getResId() == id)
-            return resources[i];
+        if (r->getResId() == id) return r;
     }
     return nullptr;
 }
@@ -69,9 +99,9 @@ Resource* Library::findResource(string id)
 void Library::displayAllResources()
 {
     cout << "\n全部资源列表：" << endl;
-    for (int i = 0; i < resourceCount; i++)
+    for (auto r : resources)
     {
-        resources[i]->display();
+        r->display();
         cout << endl;
     }
 }
@@ -79,38 +109,27 @@ void Library::displayAllResources()
 vector<Resource*> Library::searchResources(string keyword)
 {
     vector<Resource*> res;
-    for (int i = 0; i < resourceCount; i++)
+    for (auto r : resources)
     {
-        // 标题包含关键字就匹配
-        if (resources[i]->getTitle().find(keyword) != string::npos)
-        {
-            res.push_back(resources[i]);
-        }
+        if (r->getTitle().find(keyword) != string::npos)
+            res.push_back(r);
     }
     return res;
 }
 
 void Library::addReader(Reader* r)
 {
-    if (readerCount < MAX_READERS)
-    {
-        readers[readerCount++] = r;
-    }
+    readers.push_back(r);
 }
 
 bool Library::removeReader(string id)
 {
-    for (int i = 0; i < readerCount; i++)
+    for (auto it = readers.begin(); it != readers.end(); ++it)
     {
-        if (readers[i]->getReaderId() == id)
+        if ((*it)->getReaderId() == id)
         {
-            delete readers[i];
-            for (int j = i; j < readerCount - 1; j++)
-            {
-                readers[j] = readers[j + 1];
-            }
-            readers[readerCount - 1] = nullptr;
-            readerCount--;
+            delete *it;
+            readers.erase(it);
             return true;
         }
     }
@@ -119,10 +138,9 @@ bool Library::removeReader(string id)
 
 Reader* Library::findReader(string id)
 {
-    for (int i = 0; i < readerCount; i++)
+    for (auto r : readers)
     {
-        if (readers[i]->getReaderId() == id)
-            return readers[i];
+        if (r->getReaderId() == id) return r;
     }
     return nullptr;
 }
@@ -130,9 +148,9 @@ Reader* Library::findReader(string id)
 void Library::displayAllReaders()
 {
     cout << "\n全部读者列表：" << endl;
-    for (int i = 0; i < readerCount; i++)
+    for (auto r : readers)
     {
-        readers[i]->display();
+        r->display();
         cout << endl;
     }
 }
@@ -144,17 +162,17 @@ bool Library::borrowBook(string readerId, string resId, string today)
     if (!rd || !rs)
         return false;
 
-    // 判断是不是纸质资源，电子资源不能借
+    // 电子资源不能借
     PaperResource* pr = dynamic_cast<PaperResource*>(rs);
     if (!pr)
         return false;
 
-    // 判断读者还能不能借、书还有库存
     if (!rd->canBorrowMore() || !pr->borrowOne())
         return false;
 
-    // 添加一条借阅记录，到期日期这里简化写
-    BorrowRecord newRec(readerId, resId, today, "到期简化");
+    // 根据资源借阅期限算到期日
+    string due = addDays(today, rs->getBorrowPeriod());
+    BorrowRecord newRec(readerId, resId, today, due);
     records.push_back(newRec);
     rd->borrowBook();
     return true;
@@ -171,12 +189,16 @@ bool Library::returnBook(string readerId, string resId, string today)
     if (!pr)
         return false;
 
-    // 找到这条没归还的记录
     for (auto& rec : records)
     {
         if (rec.getReaderId() == readerId && rec.getResourceId() == resId && !rec.getIsReturned())
         {
-            rec.doReturn(today, 0);
+            // 计算逾期罚款：超过到期日每天 0.1 元
+            double fine = 0;
+            int overdue = daysBetween(rec.getDueDate(), today);
+            if (overdue > 0) fine = overdue * 0.1;
+
+            rec.doReturn(today, fine);
             pr->returnOne();
             rd->returnBook();
             return true;
@@ -204,8 +226,8 @@ vector<BorrowRecord> Library::getBorrowRecords()
 void Library::showStatistics()
 {
     cout << "\n====图书馆统计信息====" << endl;
-    cout << "资源总数：" << resourceCount << endl;
-    cout << "读者总数：" << readerCount << endl;
+    cout << "资源总数：" << resources.size() << endl;
+    cout << "读者总数：" << readers.size() << endl;
     cout << "借阅记录总数：" << records.size() << endl;
 }
 
@@ -222,12 +244,12 @@ bool Library::verifyAdmin(string pwd) const
 
 int Library::getResourceCount() const
 {
-    return resourceCount;
+    return (int)resources.size();
 }
 
 int Library::getReaderCount() const
 {
-    return readerCount;
+    return (int)readers.size();
 }
 
 string Library::getLibraryName() const
@@ -235,51 +257,31 @@ string Library::getLibraryName() const
     return libraryName;
 }
 
-// 把所有资源放到vector，给FileManager调用
 vector<Resource*> Library::getAllResourceList()
 {
-    vector<Resource*> list;
-    for (int i = 0; i < resourceCount; i++)
-    {
-        list.push_back(resources[i]);
-    }
-    return list;
+    return resources;
 }
 
-// 把所有读者放到vector，给FileManager调用
 vector<Reader*> Library::getAllReaderList()
 {
-    vector<Reader*> list;
-    for (int i = 0; i < readerCount; i++)
-    {
-        list.push_back(readers[i]);
-    }
-    return list;
+    return readers;
 }
 
-// 一次性保存三类数据到txt文件
 bool Library::saveAllData()
 {
-    bool s1 = FileManager::saveResources(getAllResourceList(), "resources.txt");
-    bool s2 = FileManager::saveReaders(getAllReaderList(), "readers.txt");
+    bool s1 = FileManager::saveResources(resources, "resources.txt");
+    bool s2 = FileManager::saveReaders(readers, "readers.txt");
     bool s3 = FileManager::saveRecords(records, "records.txt");
     return s1 && s2 && s3;
 }
 
-// 从txt加载数据
 bool Library::loadAllData()
 {
     vector<Resource*> resList = FileManager::loadResources("resources.txt");
-    for (auto r : resList)
-    {
-        addResource(r);
-    }
+    for (auto r : resList) resources.push_back(r);
 
     vector<Reader*> rdList = FileManager::loadReaders("readers.txt");
-    for (auto r : rdList)
-    {
-        addReader(r);
-    }
+    for (auto r : rdList) readers.push_back(r);
 
     records = FileManager::loadRecords("records.txt");
     return true;
